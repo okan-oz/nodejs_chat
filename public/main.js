@@ -225,7 +225,7 @@ $(function() {
   socket.on('login', (data) => {
     connected = true;
     // Display the welcome message
-    const message = 'Welcome to Socket.IO Chat – ';
+    const message = 'Socket.IO Test – Socket Hostname:'+ socket.io.engine.hostname + ' Port:'+socket.io.engine.port;
     log(message, {
       prepend: true
     });
