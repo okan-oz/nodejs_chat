@@ -1,4 +1,5 @@
 // Setup basic express server
+const { SocketEvents } = require('./constants/socket_event');
 const express = require('express');
 const app = express();
 const path = require('path');
@@ -17,60 +18,64 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let numUsers = 0;
 
-io.on('connection', (socket) => {
+io.on(SocketEvents.connection, (socket) => {
   let addedUser = false;
 
   // when the client emits 'new message', this listens and executes
-  socket.on('new message', (data) => {
+  socket.on(SocketEvents.new_message, (data) => {
     // we tell the client to execute 'new message'
-    socket.broadcast.emit('new message', {
+    socket.broadcast.emit(SocketEvents.new_message, {
       username: socket.username,
       message: data
     });
   });
 
   // when the client emits 'add user', this listens and executes
-  socket.on('add user', (username) => {
+  socket.on(SocketEvents.add_user, (username) => {
     if (addedUser) return;
 
     // we store the username in the socket session for this client
     socket.username = username;
     ++numUsers;
     addedUser = true;
-    socket.emit('login', {
+    socket.emit(SocketEvents.login, {
       numUsers: numUsers
     });
     // echo globally (all clients) that a person has connected
-    socket.broadcast.emit('user joined', {
+    socket.broadcast.emit(SocketEvents.user_joined, {
       username: socket.username,
       numUsers: numUsers
     });
   });
 
   // when the client emits 'typing', we broadcast it to others
-  socket.on('typing', () => {
+  socket.on(SocketEvents.typing, () => {
     socket.broadcast.emit('typing', {
       username: socket.username
     });
   });
 
   // when the client emits 'stop typing', we broadcast it to others
-  socket.on('stop typing', () => {
+  socket.on(SocketEvents.stop_typing, () => {
     socket.broadcast.emit('stop typing', {
       username: socket.username
     });
   });
 
   // when the user disconnects.. perform this
-  socket.on('disconnect', () => {
+  socket.on(SocketEvents.disconnect, () => {
     if (addedUser) {
       --numUsers;
 
       // echo globally that this client has left
-      socket.broadcast.emit('user left', {
+      socket.broadcast.emit(SocketEvents.user_left, {
         username: socket.username,
         numUsers: numUsers
       });
     }
+  });
+
+  socket.onAny((event, ...args) => {
+    console.log(event, args);
   });
 });
