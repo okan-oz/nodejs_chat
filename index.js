@@ -22,22 +22,23 @@ io.on(SocketEvents.connection, (socket) => {
   let addedUser = false;
 
   // when the client emits 'new message', this listens and executes
-  socket.on(SocketEvents.new_message, (data) => {
+  socket.on(SocketEvents.send_new_message_broadcast, (data) => {
     // we tell the client to execute 'new message'
-    socket.broadcast.emit(SocketEvents.new_message, {
+    socket.broadcast.emit(SocketEvents.send_new_message_broadcast, {
       username: socket.username,
       message: data
     });
   });
 
   // when the client emits 'add user', this listens and executes
-  socket.on(SocketEvents.add_user, (username) => {
+  socket.on(SocketEvents.join_own_room, (username) => {
     if (addedUser) return;
 
     // we store the username in the socket session for this client
     socket.username = username;
     ++numUsers;
     addedUser = true;
+
     socket.emit(SocketEvents.login, {
       numUsers: numUsers
     });
@@ -46,6 +47,9 @@ io.on(SocketEvents.connection, (socket) => {
       username: socket.username,
       numUsers: numUsers
     });
+
+    socket.join(username);
+
   });
 
   // when the client emits 'typing', we broadcast it to others
@@ -57,7 +61,7 @@ io.on(SocketEvents.connection, (socket) => {
 
   // when the client emits 'stop typing', we broadcast it to others
   socket.on(SocketEvents.stop_typing, () => {
-    socket.broadcast.emit('stop typing', {
+    socket.broadcast.emit(SocketEvents.stop_typing, {
       username: socket.username
     });
   });

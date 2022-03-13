@@ -47,7 +47,7 @@ $(function() {
       $currentInput = $inputMessage.focus();
 
       // Tell the server your username
-      socket.emit('add user', username);
+      socket.emit('join_own_room', username);
     }
   }
 
@@ -61,7 +61,7 @@ $(function() {
       $inputMessage.val('');
       addChatMessage({ username, message });
       // tell server to execute 'new message' and send along one parameter
-      socket.emit('new message', message);
+      socket.emit('send_new_message_broadcast', message);
     }
   }
 
@@ -158,7 +158,7 @@ $(function() {
         const typingTimer = (new Date()).getTime();
         const timeDiff = typingTimer - lastTypingTime;
         if (timeDiff >= TYPING_TIMER_LENGTH && typing) {
-          socket.emit('stop typing');
+          socket.emit('stop_typing');
           typing = false;
         }
       }, TYPING_TIMER_LENGTH);
@@ -195,7 +195,7 @@ $(function() {
     if (event.which === 13) {
       if (username) {
         sendMessage();
-        socket.emit('stop typing');
+        socket.emit('stop_typing');
         typing = false;
       } else {
         setUsername();
@@ -233,18 +233,18 @@ $(function() {
   });
 
   // Whenever the server emits 'new message', update the chat body
-  socket.on('new message', (data) => {
+  socket.on('send_new_message_broadcast', (data) => {
     addChatMessage(data);
   });
 
   // Whenever the server emits 'user joined', log it in the chat body
-  socket.on('user joined', (data) => {
+  socket.on('user_joined', (data) => {
     log(`${data.username} joined`);
     addParticipantsMessage(data);
   });
 
   // Whenever the server emits 'user left', log it in the chat body
-  socket.on('user left', (data) => {
+  socket.on('user_left', (data) => {
     log(`${data.username} left`);
     addParticipantsMessage(data);
     removeChatTyping(data);
@@ -256,7 +256,7 @@ $(function() {
   });
 
   // Whenever the server emits 'stop typing', kill the typing message
-  socket.on('stop typing', (data) => {
+  socket.on('stop_typing', (data) => {
     removeChatTyping(data);
   });
 
@@ -267,7 +267,7 @@ $(function() {
   socket.io.on('reconnect', () => {
     log('you have been reconnected');
     if (username) {
-      socket.emit('add user', username);
+      socket.emit('join_own_room', username);
     }
   });
 
