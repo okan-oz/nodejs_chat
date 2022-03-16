@@ -23,22 +23,27 @@ io.on(SocketEvents.connection, async (socket) => {
 
   // when the client emits 'new message', this listens and executes
   socket.on(SocketEvents.send_new_message_broadcast, (messagePayload) => {
-
-    var messagePayloadObj = JSON.parse(messagePayload);
-
-    socket.to(messagePayloadObj.to).emit(SocketEvents.send_message_to, messagePayloadObj);
-    socket.to(messagePayloadObj.to).emit(SocketEvents.send_new_message_broadcast, messagePayloadObj);
+    try {
+      var messagePayloadObj = JSON.parse(messagePayload);
+      socket.to(messagePayloadObj.to).emit(SocketEvents.send_new_message_broadcast, messagePayloadObj);
+      io.in(messagePayloadObj.from).emit(SocketEvents.send_new_message_broadcast, messagePayloadObj);
+    }
+    catch (e) {
+      console.log(e);
+    }
   });
 
 
   socket.on(SocketEvents.send_message_to, (messagePayload) => {
-
-    var messagePayloadObj = JSON.parse(messagePayload);
-
-    // socket.to(messagePayloadObj.to).emit(SocketEvents.send_message_to, messagePayloadObj);
-    socket.to(messagePayloadObj.to).emit(SocketEvents.send_new_message_broadcast, messagePayloadObj);
-    io.in(messagePayloadObj.from).emit(SocketEvents.send_message_to, messagePayloadObj);
+    try {
+      var messagePayloadObj = JSON.parse(messagePayload);
+      socket.to(messagePayloadObj.to).emit(SocketEvents.send_message_to, messagePayloadObj);
+      io.in(messagePayloadObj.from).emit(SocketEvents.send_message_to, messagePayloadObj);
+    } catch (e) {
+      console.log(e);
+    }
   });
+
 
   // when the client emits 'add user', this listens and executes
   socket.on(SocketEvents.join_own_room, (username) => {
