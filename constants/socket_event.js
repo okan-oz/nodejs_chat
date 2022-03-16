@@ -8,7 +8,8 @@ const SocketEvents = {
     user_joined:'user_joined',
     login :'login',
     join_own_room:'join_own_room',
-    send_message_to:'send_message_to'
+    send_message_to:'send_message_to',
+    join_own_room_phone:'join_own_room_phone',
 
 };
 

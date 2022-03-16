@@ -18,16 +18,26 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let numUsers = 0;
 
-io.on(SocketEvents.connection, (socket) => {
+io.on(SocketEvents.connection, async (socket) => {
   let addedUser = false;
 
   // when the client emits 'new message', this listens and executes
-  socket.on(SocketEvents.send_new_message_broadcast, (data) => {
-    // we tell the client to execute 'new message'
-    socket.broadcast.emit(SocketEvents.send_new_message_broadcast, {
-      username: socket.username,
-      message: data
-    });
+  socket.on(SocketEvents.send_new_message_broadcast, (messagePayload) => {
+
+    var messagePayloadObj = JSON.parse(messagePayload);
+
+    socket.to(messagePayloadObj.to).emit(SocketEvents.send_message_to, messagePayloadObj);
+    socket.to(messagePayloadObj.to).emit(SocketEvents.send_new_message_broadcast, messagePayloadObj);
+  });
+
+
+  socket.on(SocketEvents.send_message_to, (messagePayload) => {
+
+    var messagePayloadObj = JSON.parse(messagePayload);
+
+    // socket.to(messagePayloadObj.to).emit(SocketEvents.send_message_to, messagePayloadObj);
+    socket.to(messagePayloadObj.to).emit(SocketEvents.send_new_message_broadcast, messagePayloadObj);
+    io.in(messagePayloadObj.from).emit(SocketEvents.send_message_to, messagePayloadObj);
   });
 
   // when the client emits 'add user', this listens and executes
@@ -49,6 +59,31 @@ io.on(SocketEvents.connection, (socket) => {
     });
 
     socket.join(username);
+
+  });
+
+  socket.on(SocketEvents.join_own_room_phone, (joinOwnRoomPayload) => {
+    if (addedUser) return;
+
+    var joinOwnRoomPayloadObj = JSON.parse(joinOwnRoomPayload);
+    socket.phoneNumber = joinOwnRoomPayloadObj.phoneNumber;
+    socket.userID = joinOwnRoomPayloadObj.userID;
+    socket.userDisplayName = joinOwnRoomPayloadObj.userDisplayName;
+    socket.username = joinOwnRoomPayloadObj.userID;
+
+    ++numUsers;
+    addedUser = true;
+
+    socket.emit(SocketEvents.login, {
+      numUsers: numUsers
+    });
+    // echo globally (all clients) that a person has connected
+    socket.broadcast.emit(SocketEvents.user_joined, {
+      username: socket.username,
+      numUsers: numUsers
+    });
+
+    socket.join(joinOwnRoomPayloadObj.userID);
 
   });
 
